@@ -33,6 +33,14 @@ const rejectedCountSpan = document.getElementById('rejectedCount');
 const btnCloseRejected = document.getElementById('btnCloseRejected');
 const invalidStatBox = document.querySelector('.stat-box.invalid');
 
+// Valid Participants Elements
+const validModal = document.getElementById('validModal');
+const validList = document.getElementById('validList');
+const validCountModal = document.getElementById('validCountModal');
+const btnCloseValid = document.getElementById('btnCloseValid');
+const btnCopyValid = document.getElementById('btnCopyValid');
+const validStatBox = document.querySelector('.stat-box.valid');
+
 // State
 let participants = []; 
 let rejectedEntries = [];
@@ -144,6 +152,18 @@ btnCloseExtractor.addEventListener('click', () => extractorModal.classList.add('
 // Rejected Audit Log
 invalidStatBox.addEventListener('click', showRejectedModal);
 btnCloseRejected.addEventListener('click', () => rejectedModal.classList.add('hidden'));
+
+// Valid Participants Log
+validStatBox.addEventListener('click', showValidModal);
+btnCloseValid.addEventListener('click', () => validModal.classList.add('hidden'));
+btnCopyValid.addEventListener('click', () => {
+    if (participants.length === 0) return;
+    const text = participants.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+        btnCopyValid.innerText = '✅ ZKOPÍROVÁNO!';
+        setTimeout(() => btnCopyValid.innerText = '📋 ZKOPÍROVAT SEZNAM', 2000);
+    });
+});
 
 tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -299,7 +319,7 @@ function parseData() {
 
 
 // =============================================
-// AUDIT LOG MODAL
+// AUDIT LOG MODAL (Rejected)
 // =============================================
 
 function showRejectedModal() {
@@ -307,7 +327,6 @@ function showRejectedModal() {
     
     rejectedCountSpan.innerText = rejectedEntries.length;
 
-    // Build table rows
     let html = '';
     rejectedEntries.forEach((entry, i) => {
         const badgeClass = getBadgeClass(entry.reason);
@@ -338,6 +357,29 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+
+// =============================================
+// VALID PARTICIPANTS MODAL
+// =============================================
+
+function showValidModal() {
+    if (participants.length === 0) return;
+
+    validCountModal.innerText = participants.length;
+
+    let html = '<ul class="valid-list">';
+    participants.forEach((name, i) => {
+        html += `<li>
+            <span class="valid-index">${i + 1}.</span>
+            <span class="valid-name">${escapeHtml(name)}</span>
+        </li>`;
+    });
+    html += '</ul>';
+
+    validList.innerHTML = html;
+    validModal.classList.remove('hidden');
 }
 
 

@@ -200,6 +200,35 @@ button {
 .stat-box.valid .stat-value { color: #0f0; text-shadow: 0 0 8px #0f0; }
 .stat-box.invalid .stat-value { color: #f00; text-shadow: 0 0 8px #f00; }
 
+.stat-box.valid {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.stat-box.valid:hover {
+  background: rgba(0, 255, 0, 0.1);
+  border-color: #0f0;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+}
+
+.stat-box.valid::after {
+  content: "klikni pro seznam";
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: #666;
+  opacity: 0;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+
+.stat-box.valid:hover::after {
+  opacity: 1;
+}
+
 .stat-box.invalid {
   cursor: pointer;
   transition: all 0.3s ease;
@@ -396,6 +425,11 @@ button {
   margin-bottom: 2rem;
   border-bottom: 1px solid #333;
   padding-bottom: 1rem;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.1;
+  max-width: 100%;
 }
 
 @keyframes popIn {
@@ -533,6 +567,70 @@ button {
 .reason-badge.long-text   { background: #2a003a; color: #cc44ff; border: 1px solid #cc44ff; }
 .reason-badge.bad-format  { background: #1a1a1a; color: #888;    border: 1px solid #555;    }
 .reason-badge.nav-noise   { background: #3a1a00; color: #ff8844; border: 1px solid #ff8844; }
+
+/* Valid Participants Modal */
+.valid-modal {
+    border-color: #0f0 !important;
+    box-shadow: 0 0 50px rgba(0, 255, 0, 0.2) !important;
+}
+
+.valid-list-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 1rem 0;
+    border-radius: 8px;
+    border: 1px solid #333;
+    padding: 0;
+}
+
+.valid-list-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+.valid-list-wrapper::-webkit-scrollbar-thumb {
+    background: #0a0;
+    border-radius: 3px;
+}
+.valid-list-wrapper::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.valid-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.valid-list li {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #222;
+    color: #ccc;
+    transition: background 0.2s;
+}
+
+.valid-list li:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.valid-list li:hover {
+    background: rgba(0, 255, 0, 0.06);
+}
+
+.valid-list li .valid-index {
+    color: #555;
+    font-size: 0.75rem;
+    min-width: 30px;
+    text-align: right;
+    font-family: var(--font-heading);
+}
+
+.valid-list li .valid-name {
+    color: #0f0;
+    font-weight: 700;
+}
 
 /* Responsive */
 @media (max-width: 768px) {

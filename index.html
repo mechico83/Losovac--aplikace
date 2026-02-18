@@ -126,6 +126,19 @@ marie_svoboda Chci vyhrát! @jana
         </div>
     </div>
 
+    <!-- Modal: Valid Participants -->
+    <div id="validModal" class="modal hidden">
+        <div class="modal-content large-modal valid-modal">
+            <h3>✅ SEZNAM PLATNÝCH ÚČASTNÍKŮ</h3>
+            <p class="modal-subtitle">Celkem platných: <strong id="validCountModal">0</strong></p>
+            <button id="btnCopyValid" class="btn primary full-width">📋 ZKOPÍROVAT SEZNAM</button>
+            <div id="validList" class="valid-list-wrapper">
+                <!-- JS fills this -->
+            </div>
+            <button id="btnCloseValid" class="btn tertiary top-space full-width">ZAVŘÍT</button>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
