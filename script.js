@@ -15,6 +15,20 @@ const modal = document.getElementById("winnerModal");
 const winnerNameSpan = document.getElementById("winnerName");
 const btnCloseModal = document.getElementById("btnCloseModal");
 const countdownOverlay = document.getElementById("countdownOverlay");
+const btnFullscreen = document.getElementById("btnFullscreen");
+
+// Fullscreen Toggle Logic
+if (btnFullscreen) {
+  btnFullscreen.addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.log(`Chyba při pokusu o fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  });
+}
 
 // Wheel Section Container for Fullscreen
 const wheelSection = document.querySelector(".wheel-section");
