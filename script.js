@@ -1,4 +1,4 @@
-// Antigravity Raffle Agent Logic - V7 (Final - Time Cleaner)
+// Antigravity Raffle Agent Logic - V8 (Cinematic Fullscreen)
 // Senior JS Implementation
 
 const commentsInput = document.getElementById("commentsInput");
@@ -13,6 +13,9 @@ const ctx = canvas.getContext("2d");
 const modal = document.getElementById("winnerModal");
 const winnerNameSpan = document.getElementById("winnerName");
 const btnCloseModal = document.getElementById("btnCloseModal");
+
+// Wheel Section Container for Fullscreen
+const wheelSection = document.querySelector(".wheel-section");
 
 // Extractor Elements
 const btnHelp = document.getElementById("btnHelp");
@@ -212,6 +215,18 @@ btnReset.addEventListener("click", function () {
 });
 btnCloseModal.addEventListener("click", function () {
   modal.classList.add("hidden");
+  // Exit Fullscreen Mode when winner is acknowledged
+  wheelSection.classList.remove("fullscreen-spin");
+});
+
+// Escape key to exit fullscreen manually if stuck
+document.addEventListener("keydown", function (e) {
+  if (
+    e.key === "Escape" &&
+    wheelSection.classList.contains("fullscreen-spin")
+  ) {
+    wheelSection.classList.remove("fullscreen-spin");
+  }
 });
 
 btnHelp.addEventListener("click", function () {
@@ -352,7 +367,7 @@ function parseData() {
     commentText = commentText.replace(/(\d+\s*[dhmsw]\s*)?Reply.*$/i, "");
     commentText = commentText.replace(/To se mi líbí.*$/i, "");
     commentText = commentText.replace(/Upraveno.*$/i, "");
-    // NEW: Remove standalone time indicators like "před 2 dny", "2 h", "3 min" often found at end or start
+    // Cleanup time noise (před 2 dny etc.)
     commentText = commentText.replace(
       /(před\s+)?\d+\s+(dny|d\.|h|min|s|týd\.?|měs\.?|r\.?|let).*$/i,
       "",
@@ -530,6 +545,9 @@ function resetApp() {
   countInvalidSpan.innerText = "0";
   btnSpin.disabled = true;
   btnReset.disabled = true;
+
+  // RESET UI
+  wheelSection.classList.remove("fullscreen-spin");
 }
 
 // =============================================
@@ -591,6 +609,9 @@ function startSpin() {
   btnSpin.disabled = true;
   btnLoad.disabled = true;
   btnReset.disabled = true;
+
+  // ACTIVATE FULLSCREEN
+  wheelSection.classList.add("fullscreen-spin");
 
   spinSpeed = Math.random() * 0.2 + 0.3;
 

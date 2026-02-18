@@ -339,6 +339,7 @@ button {
   width: 90%;
   max-width: 500px; /* Limit max size */
   aspect-ratio: 1/1; /* Ensure square */
+  transition: transform 0.5s ease-in-out;
 }
 
 #wheelCanvas {
@@ -658,4 +659,42 @@ button {
       width: 95%;
       padding: 1rem;
   }
+}
+
+/* Animace přechodu do Fullscreenu - POŽADAVEK */
+.wheel-section {
+    transition: all 0.5s ease-in-out;
+}
+
+.wheel-section.fullscreen-spin {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 50; /* Musí být pod modálním oknem vítěze, to má 100 */
+    border-radius: 0;
+    background: radial-gradient(circle at center, #111 0%, #000 100%);
+    margin: 0;
+    border: none;
+}
+
+/* Základní zvětšení pro velké monitory (bezpečnější hodnota) */
+.wheel-section.fullscreen-spin .canvas-container {
+    transform: scale(1.3);
+    transition: transform 0.5s ease-in-out;
+}
+
+/* Pojistka 1: Střední monitory a notebooky (výška do 850px) */
+@media (max-height: 850px) {
+    .wheel-section.fullscreen-spin .canvas-container {
+        transform: scale(1.15); /* Jemnější zvětšení */
+    }
+}
+
+/* Pojistka 2: Malé obrazovky (výška do 700px) */
+@media (max-height: 700px) {
+    .wheel-section.fullscreen-spin .canvas-container {
+        transform: scale(1); /* Ponecháme původní velikost, kolo a šipka se zaručeně vejdou */
+    }
 }
