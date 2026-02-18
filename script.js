@@ -1,4 +1,4 @@
-// Antigravity Raffle Agent Logic - V4 with Audit Log
+// Antigravity Raffle Agent Logic - V5 (Strict Parsing)
 // Senior JS Implementation
 
 const commentsInput = document.getElementById('commentsInput');
@@ -26,14 +26,13 @@ const codeFacebook = document.getElementById('codeFacebook');
 const btnCopyInstagram = document.getElementById('btnCopyInstagram');
 const btnCopyFacebook = document.getElementById('btnCopyFacebook');
 
-// Rejected Audit Elements
+// Audit Logs Elements
 const rejectedModal = document.getElementById('rejectedModal');
 const rejectedTableBody = document.getElementById('rejectedTableBody');
 const rejectedCountSpan = document.getElementById('rejectedCount');
 const btnCloseRejected = document.getElementById('btnCloseRejected');
 const invalidStatBox = document.querySelector('.stat-box.invalid');
 
-// Valid Participants Elements
 const validModal = document.getElementById('validModal');
 const validList = document.getElementById('validList');
 const validCountModal = document.getElementById('validCountModal');
@@ -52,8 +51,11 @@ let animationFrameId = null;
 // Configuration
 const colors = ['#00f3ff', '#2c67ff', '#ff0055', '#ffffff'];
 const BLOCKED_USERS = [
-    'Recenze', 'Sbírka', 'O MNĚ', 'MATERIÁL', 'BALENÍ', 
-    'Košík', 'Hledat', 'bellakvet', 'Upraveno', 'Sbírka kytiček'
+    'bellakvet', 'Recenze', 'O MNĚ', 'Sbírka', 'Košík', 'Hledat', 'Upraveno', 
+    'MATERIÁL', 'BALENÍ', 'Vyhraj', 'Chcete', 'Sleduj', 'Dej', 'Označ', 
+    'POZOR', 'Musí', 'Pouze', 'Soutěž', 'Vítěze', 'Www', 
+    '1', '2', '3', 'Giveaway', 'Koralky', 'Sperky', 'Rucniprace', 'Naramek',
+    'Sbírka kytiček'
 ];
 
 // --- Extractor Scripts ---
@@ -149,11 +151,10 @@ btnCloseModal.addEventListener('click', () => modal.classList.add('hidden'));
 btnHelp.addEventListener('click', () => extractorModal.classList.remove('hidden'));
 btnCloseExtractor.addEventListener('click', () => extractorModal.classList.add('hidden'));
 
-// Rejected Audit Log
+// Audit Logs Listeners
 invalidStatBox.addEventListener('click', showRejectedModal);
 btnCloseRejected.addEventListener('click', () => rejectedModal.classList.add('hidden'));
 
-// Valid Participants Log
 validStatBox.addEventListener('click', showValidModal);
 btnCloseValid.addEventListener('click', () => validModal.classList.add('hidden'));
 btnCopyValid.addEventListener('click', () => {
@@ -200,7 +201,7 @@ btnPaste.addEventListener('click', async () => {
 
 
 // =============================================
-// CORE LOGIC (V4 - with Audit Log)
+// CORE LOGIC (V5 - Strict Parsing)
 // =============================================
 
 function parseData() {
@@ -222,25 +223,39 @@ function parseData() {
         let username = '';
         let commentText = '';
 
-        // 1. Robust Splitting (### priority, then dash, then space)
+        // 1. Strict Format Detection
         if (trimmed.includes('###')) {
+            // Standard extractor format
             const parts = trimmed.split('###');
             username = parts[0].trim();
             commentText = parts.slice(1).join('###').trim();
         } 
-        else if (trimmed.includes(' - ')) {
-            const parts = trimmed.split(' - ');
-            username = parts[0].trim();
-            commentText = parts.slice(1).join(' - ').trim();
-        } 
         else {
-            const firstSpace = trimmed.indexOf(' ');
-            if (firstSpace > -1) {
-                username = trimmed.substring(0, firstSpace).trim();
-                commentText = trimmed.substring(firstSpace + 1).trim();
+            // Non-standard format? Danger zone.
+            
+            // STRICT RULE: If no separator AND no '@', assume it's Rule Text
+            if (!trimmed.includes('@')) {
+                invalid++;
+                // Use first few words as 'name' for the log
+                const preview = trimmed.substring(0, 30) + (trimmed.length > 30 ? '...' : '');
+                rejectedEntries.push({ name: preview, reason: 'TEXT/PRAVIDLA' });
+                return;
+            }
+
+            // Fallback parsing for manual entries containing '@'
+            if (trimmed.includes(' - ')) {
+                const parts = trimmed.split(' - ');
+                username = parts[0].trim();
+                commentText = parts.slice(1).join(' - ').trim();
             } else {
-                username = trimmed;
-                commentText = '';
+                const firstSpace = trimmed.indexOf(' ');
+                if (firstSpace > -1) {
+                    username = trimmed.substring(0, firstSpace).trim();
+                    commentText = trimmed.substring(firstSpace + 1).trim();
+                } else {
+                    username = trimmed;
+                    commentText = '';
+                }
             }
         }
 
@@ -253,42 +268,43 @@ function parseData() {
 
         const lowerUser = username.toLowerCase();
 
-        // --- FILTER 1: Blacklist ---
+        // --- FILTER 1: Blacklist (Reason: BLACKLIST) ---
         if (BLOCKED_USERS.some(b => b.toLowerCase() === lowerUser)) {
             invalid++;
             rejectedEntries.push({ name: username, reason: 'BLACKLIST' });
             return;
         }
 
-        // --- FILTER 2: Navigation noise (Name == Text) ---
+        // --- FILTER 2: Navigation noise (Reason: NAVIGACE) ---
         if (commentText && lowerUser === commentText.toLowerCase()) {
             invalid++;
             rejectedEntries.push({ name: username, reason: 'NAVIGACE' });
             return;
         }
 
-        // --- FILTER 3: Bad format (empty name or text) ---
+        // --- FILTER 3: Bad format (Reason: VADNÝ FORMÁT) ---
         if (!username || !commentText) {
             invalid++;
             rejectedEntries.push({ name: username || '(prázdné)', reason: 'VADNÝ FORMÁT' });
             return;
         }
 
-        // --- FILTER 4: Long text (post body > 300 chars) ---
+        // --- FILTER 4: Long text (Reason: DLOUHÝ TEXT) ---
         if (commentText.length > 300) {
             invalid++;
             rejectedEntries.push({ name: username, reason: 'DLOUHÝ TEXT' });
             return;
         }
 
-        // --- FILTER 5: Mandatory '@' ---
+        // --- FILTER 5: Mandatory '@' (Reason: CHYBÍ @) ---
+        // Just in case parsing succeeded but @ is missing (caught by STRICT rule usually, but explicit format might miss it)
         if (!commentText.includes('@')) {
             invalid++;
             rejectedEntries.push({ name: username, reason: 'CHYBÍ @' });
             return;
         }
 
-        // --- FILTER 6: Deduplication ---
+        // --- FILTER 6: Deduplication (Reason: DUPLICITA) ---
         if (seenUsers.has(lowerUser)) {
             invalid++;
             rejectedEntries.push({ name: username, reason: 'DUPLICITA' });
@@ -302,7 +318,7 @@ function parseData() {
     });
 
     if (newParticipants.length === 0) {
-        alert("Žádní platní účastníci! Zkontrolujte, zda komentáře obsahují '@' a nejsou na blacklistu.");
+        alert("Žádní platní účastníci! Zkontrolujte, zda komentáře obsahují '@' a nejsou textem pravidel.");
     }
 
     participants = newParticipants;
@@ -343,13 +359,15 @@ function showRejectedModal() {
 
 function getBadgeClass(reason) {
     switch (reason) {
-        case 'BLACKLIST':    return 'blacklist';
-        case 'CHYBÍ @':      return 'missing-at';
-        case 'DUPLICITA':    return 'duplicate';
-        case 'DLOUHÝ TEXT':  return 'long-text';
-        case 'VADNÝ FORMÁT': return 'bad-format';
-        case 'NAVIGACE':     return 'nav-noise';
-        default:             return '';
+        case 'BLACKLIST':     return 'blacklist';
+        case 'TEXT/PRAVIDLA': return 'blacklist'; // Same style as blacklist
+        case 'CHYBÍ @':       return 'missing-at';
+        case 'DUPLICITA':     return 'duplicate';
+        case 'DLOUHÝ TEXT':   return 'long-text';
+        case 'VADNÝ FORMÁT':  return 'bad-format';
+        case 'NAVIGACE':      return 'nav-noise';
+        case 'TEXT BEZ @':    return 'missing-at';
+        default:              return '';
     }
 }
 
