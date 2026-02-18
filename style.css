@@ -676,31 +676,125 @@ button {
     font-weight: 700;
 }
 
-/* Responsive */
+/* Responsive - Mobile Optimization */
 @media (max-width: 768px) {
-  .app-container {
-      height: auto;
-      grid-template-rows: auto auto auto; /* Header, controls, wheel */
-      overflow-y: auto;
-  }
-  
-  .content-grid {
-      grid-template-columns: 1fr;
-      height: auto;
+  /* Global Resets for Mobile */
+  body {
+    height: auto;
+    overflow-y: auto; /* Enable native scroll */
+    display: block; /* Remove flex centering */
+    padding: 0;
   }
 
+  .app-container {
+    height: auto;
+    display: flex; /* Switch from grid to flex column */
+    flex-direction: column;
+    padding: 15px;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    gap: 30px;
+  }
+
+  .main-header {
+      margin-top: 1rem;
+  }
+
+  .content-grid {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    gap: 30px;
+  }
+
+  /* 1. Layout: Controls Top, Wheel Bottom */
   .controls-panel {
-      min-height: 400px;
+    order: 1;
+    width: 100%;
+    min-height: auto;
+    padding: 1.5rem;
   }
 
   .wheel-section {
-      min-height: 400px;
-      margin-bottom: 2rem;
+    order: 2;
+    width: 100%;
+    aspect-ratio: 1/1; /* Keep perfect square */
+    min-height: auto;
+    margin-bottom: 2rem;
+    box-shadow: none; /* Lighter look on mobile */
+    background: transparent;
+    border: none;
+  }
+
+  /* 2. Wheel Adaptation */
+  .canvas-container {
+    width: 100%;
+    max-width: 100%; /* Utilize full width */
+    margin: 0 auto;
+  }
+
+  /* 3. UI Elements */
+  .input-group textarea {
+    height: 200px; /* Fixed height for mobile usability */
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .btn {
+    width: 100%; /* Full width touch targets */
+    padding: 15px;
+    font-size: 1rem;
   }
   
+  .btn.tertiary {
+      margin-top: 10px;
+  }
+
+  .stats-dashboard {
+      grid-template-columns: 1fr 1fr 1fr; /* Keep 3 cols but tighter */
+      gap: 5px;
+  }
+  
+  .stat-box {
+      padding: 0.5rem;
+  }
+  
+  .stat-value {
+      font-size: 1.1rem;
+  }
+  
+  .stat-label {
+      font-size: 0.6rem;
+  }
+
+  /* 4. Modals - Scrollable & Fits Screen */
+  .modal {
+      align-items: flex-start; /* Parse from top */
+      padding-top: 20px;
+      overflow-y: auto;
+  }
+  
+  .modal-content, 
   .modal-content.large-modal {
-      width: 95%;
-      padding: 1rem;
+      width: 90%;
+      max-width: 90%;
+      max-height: 80vh; /* Allow vertical scroll inside */
+      overflow-y: auto;
+      margin: 10px auto 30px auto;
+      padding: 1.5rem;
+  }
+
+  .winner-name {
+      font-size: 2rem;
+      word-wrap: break-word;
+  }
+  
+  .checkbox-wrapper label {
+      font-size: 0.8rem;
   }
 }
 
