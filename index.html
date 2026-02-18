@@ -1,82 +1,108 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="cs">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Antigravity Raffle Agent</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
     <div class="app-container">
-      <header class="main-header">
-        <h1>ANTIGRAVITY RAFFLE AGENT</h1>
-        <h2>SOUTĚŽ @BELLAKVET</h2>
-      </header>
+        <header class="main-header">
+            <h1>ANTIGRAVITY RAFFLE AGENT</h1>
+            <h2>SOUTĚŽ @BELLAKVET</h2>
+        </header>
 
-      <main class="content-grid">
-        <!-- Left Column: Controls -->
-        <section class="controls-panel">
-          <div class="input-group">
-            <label for="commentsInput">Vstupní data (Uživatel Komentář)</label>
-            <textarea
-              id="commentsInput"
-              placeholder="Příklad:
+        <main class="content-grid">
+            <!-- Left Column: Controls -->
+            <section class="controls-panel">
+                <div class="panel-header-actions">
+                    <button id="btnHelp" class="btn small-btn">🔧 JAK ZÍSKAT DATA?</button>
+                </div>
+
+                <div class="input-group">
+                    <label for="commentsInput">Vstupní data (Uživatel Komentář)</label>
+                    <div class="textarea-wrapper">
+                        <textarea id="commentsInput" placeholder="Příklad:
 jan_novak Super soutěž @petr
 marie_svoboda Chci vyhrát! @jana
-..."
-            ></textarea>
-          </div>
+..."></textarea>
+                        <button id="btnPaste" class="btn-icon" title="Vložit ze schránky">📋</button>
+                    </div>
+                </div>
 
-          <div class="stats-dashboard">
-            <div class="stat-box">
-              <span class="stat-value" id="countLoaded">0</span>
-              <span class="stat-label">NAČTENO</span>
-            </div>
-            <div class="stat-box valid">
-              <span class="stat-value" id="countValid">0</span>
-              <span class="stat-label">PLATNÝCH</span>
-            </div>
-            <div class="stat-box invalid">
-              <span class="stat-value" id="countInvalid">0</span>
-              <span class="stat-label">VYŘAZENO</span>
-            </div>
-          </div>
+                <div class="stats-dashboard">
+                    <div class="stat-box">
+                        <span class="stat-value" id="countLoaded">0</span>
+                        <span class="stat-label">NAČTENO</span>
+                    </div>
+                    <div class="stat-box valid">
+                        <span class="stat-value" id="countValid">0</span>
+                        <span class="stat-label">PLATNÝCH</span>
+                    </div>
+                    <div class="stat-box invalid">
+                        <span class="stat-value" id="countInvalid">0</span>
+                        <span class="stat-label">VYŘAZENO</span>
+                    </div>
+                </div>
 
-          <div class="actions">
-            <button id="btnLoad" class="btn primary">NAČÍST DATA</button>
-            <button id="btnSpin" class="btn secondary" disabled>
-              ROZTOČIT RULETU
-            </button>
-            <button id="btnReset" class="btn tertiary" disabled>RESET</button>
-          </div>
-        </section>
+                <div class="actions">
+                    <button id="btnLoad" class="btn primary">NAČÍST DATA</button>
+                    <button id="btnSpin" class="btn secondary" disabled>ROZTOČIT RULETU</button>
+                    <button id="btnReset" class="btn tertiary" disabled>RESET</button>
+                </div>
+            </section>
 
-        <!-- Right Column: Wheel -->
-        <section class="wheel-section">
-          <div class="canvas-container">
-            <canvas id="wheelCanvas" width="500" height="500"></canvas>
-            <div class="wheel-marker"></div>
-          </div>
-        </section>
-      </main>
+            <!-- Right Column: Wheel -->
+            <section class="wheel-section">
+                <div class="canvas-container">
+                    <canvas id="wheelCanvas" width="500" height="500"></canvas>
+                    <div class="wheel-marker"></div>
+                </div>
+            </section>
+        </main>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal: Winner -->
     <div id="winnerModal" class="modal hidden">
-      <div class="modal-content">
-        <h3>VÍTĚZEM SE STÁVÁ</h3>
-        <div class="winner-name" id="winnerName">---</div>
-        <p>Gratulujeme k výhře!</p>
-        <button id="btnCloseModal" class="btn primary">ZAVŘÍT</button>
-      </div>
+        <div class="modal-content">
+            <h3>VÍTĚZEM SE STÁVÁ</h3>
+            <div class="winner-name" id="winnerName">---</div>
+            <p>Gratulujeme k výhře!</p>
+            <button id="btnCloseModal" class="btn primary">ZAVŘÍT</button>
+        </div>
+    </div>
+
+    <!-- Modal: Extraction Instructions -->
+    <div id="extractorModal" class="modal hidden">
+        <div class="modal-content large-modal">
+            <h3>JAK ZÍSKAT DATA?</h3>
+            <p class="modal-subtitle">Vyberte platformu, zkopírujte kód a vložte jej do konzole prohlížeče (F12 > Console) na stránce soutěže.</p>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-target="tabInstagram">Instagram</button>
+                <button class="tab-btn" data-target="tabFacebook">Facebook</button>
+            </div>
+
+            <div class="tab-content active" id="tabInstagram">
+                <p>Otevřete příspěvek na Instagramu, načtěte všechny komentáře (tlačítko <i>+</i>) a spusťte tento skript:</p>
+                <textarea id="codeInstagram" readonly class="code-block"></textarea>
+                <button id="btnCopyInstagram" class="btn secondary full-width">ZKOPÍROVAT KÓD</button>
+            </div>
+
+            <div class="tab-content" id="tabFacebook">
+                <p>Otevřete příspěvek na Facebooku, rozklikněte "Všechny komentáře" a spusťte tento skript:</p>
+                <textarea id="codeFacebook" readonly class="code-block"></textarea>
+                <button id="btnCopyFacebook" class="btn secondary full-width">ZKOPÍROVAT KÓD</button>
+            </div>
+
+            <button id="btnCloseExtractor" class="btn tertiary top-space">ZAVŘÍT OKNO</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
-  </body>
+</body>
 </html>
