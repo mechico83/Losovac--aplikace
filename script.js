@@ -103,22 +103,42 @@ const INSTAGRAM_SCRIPT = `
 `.trim();
 
 const FACEBOOK_SCRIPT = `
-// Antigravity Raffle Agent - Facebook Extractor
+// Antigravity Raffle Agent - Facebook Extractor (Smart Tagging)
 (function() {
     let comments = [];
+    // Hledáme komentáře (aria-label="Komentář od..." nebo "Comment by...")
     const commentDivs = document.querySelectorAll('div[aria-label^="Comment by"], div[aria-label^="Komentář od"]');
     
     if(commentDivs.length === 0) {
-        alert("Nenalezeny komentáře.");
+        alert("Nenalezeny komentáře. Zkuste přepnout filtr na 'Všechny komentáře' a rozbalit je.");
+        return;
     }
 
     commentDivs.forEach(div => {
         const label = div.getAttribute('aria-label');
         let username = label.replace('Comment by ', '').replace('Komentář od ', '').trim();
+        
+        // Najdeme kontejner s textem (často div s dir="auto")
         const textDiv = div.querySelector('div[dir="auto"]');
         
         if(username && textDiv) {
-            comments.push(username + ' ### ' + textDiv.innerText);
+            // CLONE: Vytvoříme kopii elementu, abychom neničili stránku
+            const clone = textDiv.cloneNode(true);
+            
+            // MAGIC: Najdeme všechny odkazy (tagy) v kopii a přidáme k nim zavináč
+            const links = clone.querySelectorAll('a');
+            links.forEach(link => {
+                // Pokud odkaz obsahuje text (není to třeba jen smajlík), přidáme @
+                if(link.innerText.length > 1) {
+                    link.innerText = '@' + link.innerText;
+                }
+            });
+
+            // Teď vezmeme text z upravené kopie
+            let finalBody = clone.innerText.trim();
+            
+            // Uložíme s oddělovačem
+            comments.push(username + ' ### ' + finalBody);
         }
     });
 
@@ -130,9 +150,9 @@ const FACEBOOK_SCRIPT = `
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
-        alert('Zkopírováno ' + comments.length + ' komentářů!');
+        alert('Zkopírováno ' + comments.length + ' komentářů! (Automaticky doplněny @ u označených přátel)');
     } else {
-        alert('Žádné komentáře nenalezeny.');
+        alert('Žádné komentáře se nepodařilo zpracovat.');
     }
 })();
 `.trim();
