@@ -1,4 +1,5 @@
-// Antigravity Raffle Agent Logic - V6 (Final)
+// Antigravity Raffle Agent Logic - V7 (Final - Time Cleaner)
+// Senior JS Implementation
 
 const commentsInput = document.getElementById("commentsInput");
 const btnLoad = document.getElementById("btnLoad");
@@ -85,86 +86,112 @@ const BLOCKED_USERS = [
 // EXTRACTOR SCRIPTS (Template Strings)
 // =============================================
 
-var INSTAGRAM_SCRIPT = [
-  "// Antigravity Raffle Agent - Instagram Extractor (v2)",
-  "(function() {",
-  "    var comments = [];",
-  '    var items = document.querySelectorAll("ul li");',
-  "    items.forEach(function(li) {",
-  '        var userEl = li.querySelector("h3, h2");',
-  '        if (!userEl) userEl = li.querySelector("div > a");',
-  "        if (!userEl) return;",
-  "        var username = userEl.innerText.trim();",
-  '        var text = "";',
-  "        var textSpan = li.querySelector('span[dir=\"auto\"]');",
-  "        if (textSpan) {",
-  "            text = textSpan.innerText.trim();",
-  "        } else {",
-  '            text = li.innerText.replace(username, "").trim();',
-  "        }",
-  "        if (username && text.length > 0) {",
-  '            comments.push(username + " ### " + text);',
-  "        }",
-  "    });",
-  "    if (comments.length === 0) {",
-  '        alert("Nenalezeny komentare.");',
-  "        return;",
-  "    }",
-  '    var output = comments.join("\\n");',
-  '    var el = document.createElement("textarea");',
-  "    el.value = output;",
-  "    document.body.appendChild(el);",
-  "    el.select();",
-  '    document.execCommand("copy");',
-  "    document.body.removeChild(el);",
-  '    alert("Zkopirovano " + comments.length + " komentaru!");',
-  "})();",
-].join("\n");
+const INSTAGRAM_SCRIPT = `
+// Antigravity Raffle Agent - Instagram Extractor (v2)
+(function() {
+    let comments = [];
+    const items = document.querySelectorAll('ul li');
+    
+    items.forEach(li => {
+        let userEl = li.querySelector('h3, h2');
+        if (!userEl) userEl = li.querySelector('div > a');
+        if (!userEl) return;
+        const username = userEl.innerText.trim();
+        
+        let text = "";
+        const textSpan = li.querySelector('span[dir="auto"]');
+        
+        if (textSpan) {
+             text = textSpan.innerText.trim();
+        } else {
+             text = li.innerText.replace(username, '').trim(); 
+        }
 
-var FACEBOOK_SCRIPT = [
-  "// Antigravity Raffle Agent - Facebook Extractor (v3 - Jarmila Fix)",
-  "(function() {",
-  "    var comments = [];",
-  '    var commentDivs = document.querySelectorAll(\'div[aria-label^="Comment by"], div[aria-label^="Komentář od"]\');',
-  "    if (commentDivs.length === 0) {",
-  '        alert("Nenalezeny komentare. Rozbalte Vsechny komentare.");',
-  "        return;",
-  "    }",
-  "    commentDivs.forEach(function(div) {",
-  '        var label = div.getAttribute("aria-label");',
-  '        var username = label.replace("Comment by ", "").replace("Komentář od ", "").trim();',
-  "        var textDiv = div.querySelector('div[dir=\"auto\"]');",
-  '        if (!textDiv) textDiv = div.querySelector(".x1lliihq.x6ikm8r.x10wlt62 span");',
-  "        if (username && textDiv) {",
-  "            var clone = textDiv.cloneNode(true);",
-  '            clone.querySelectorAll("br").forEach(function(br) { br.replaceWith(" "); });',
-  '            clone.querySelectorAll("a").forEach(function(link) {',
-  '                if (link.innerText.length > 1 && !link.innerText.startsWith("#")) {',
-  '                    link.innerText = "@" + link.innerText;',
-  "                }",
-  "            });",
-  '            var finalBody = clone.innerText.replace(/\\s+/g, " ").trim();',
-  "            if (finalBody.startsWith(username)) {",
-  "                finalBody = finalBody.substring(username.length).trim();",
-  "            }",
-  "            if (finalBody.length > 0) {",
-  '                comments.push(username + " ### " + finalBody);',
-  "            }",
-  "        }",
-  "    });",
-  "    if (comments.length > 0) {",
-  '        var el = document.createElement("textarea");',
-  '        el.value = comments.join("\\n");',
-  "        document.body.appendChild(el);",
-  "        el.select();",
-  '        document.execCommand("copy");',
-  "        document.body.removeChild(el);",
-  '        alert("Zkopirovano " + comments.length + " zaznamu! (Vcetne opravy vice radku)");',
-  "    } else {",
-  '        alert("Nepodarilo se nacist texty.");',
-  "    }",
-  "})();",
-].join("\n");
+        if(username && text.length > 0) {
+            comments.push(username + ' ### ' + text);
+        }
+    });
+
+    if(comments.length === 0) {
+        alert('Nenalezeny žádné komentáře.');
+        return;
+    }
+
+    const output = comments.join('\\n');
+    const el = document.createElement('textarea');
+    el.value = output;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    alert('Zkopírováno ' + comments.length + ' komentářů! (Formát: User ### Text)');
+})();
+`.trim();
+
+const FACEBOOK_SCRIPT = `
+// Antigravity Raffle Agent - Facebook Extractor (v4 - Time Cleaner)
+(function() {
+    let comments = [];
+    const commentDivs = document.querySelectorAll('div[aria-label^="Comment by"], div[aria-label^="Komentář od"]');
+    
+    if(commentDivs.length === 0) {
+        alert("Nenalezeny komentáře. Rozbalte 'Všechny komentáře'.");
+        return;
+    }
+
+    commentDivs.forEach(div => {
+        const label = div.getAttribute('aria-label');
+        // 1. Získání jména
+        let username = label.replace('Comment by ', '').replace('Komentář od ', '').trim();
+        
+        // 2. ČIŠTĚNÍ ČASU (NOVÉ): Odstraní "(před 2 dny)", "(včera)" atd. z konce jména
+        username = username.replace(/\\s*\\(.+?\\)$/, '').trim();
+
+        // 3. Hledání textu (Smart Fallback)
+        let textDiv = div.querySelector('div[dir="auto"]');
+        if (!textDiv) textDiv = div.querySelector('.x1lliihq.x6ikm8r.x10wlt62 span'); 
+
+        if(username && textDiv) {
+            const clone = textDiv.cloneNode(true);
+            
+            // Oprava zalomení řádků
+            clone.querySelectorAll('br').forEach(br => br.replaceWith(' '));
+
+            // Smart Tagging (@)
+            clone.querySelectorAll('a').forEach(link => {
+                const txt = link.innerText.trim();
+                if(txt.length > 1 && !txt.startsWith('#') && !txt.startsWith('@')) {
+                    link.innerText = '@' + txt;
+                }
+            });
+
+            // Čistý text
+            let finalBody = clone.innerText.replace(/\\s+/g, ' ').trim();
+            
+            // Ochrana proti duplikaci jména
+            if (finalBody.startsWith(username)) {
+                finalBody = finalBody.substring(username.length).trim();
+            }
+
+            if (finalBody.length > 0) {
+                comments.push(username + ' ### ' + finalBody);
+            }
+        }
+    });
+
+    if(comments.length > 0) {
+        const el = document.createElement('textarea');
+        el.value = comments.join('\\n');
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert('Zkopírováno ' + comments.length + ' záznamů! (Jména jsou vyčištěna od času)');
+    } else {
+        alert('Nepodařilo se extrahovat žádný text.');
+    }
+})();
+`.trim();
 
 // Fill code areas
 codeInstagram.value = INSTAGRAM_SCRIPT;
@@ -325,6 +352,11 @@ function parseData() {
     commentText = commentText.replace(/(\d+\s*[dhmsw]\s*)?Reply.*$/i, "");
     commentText = commentText.replace(/To se mi líbí.*$/i, "");
     commentText = commentText.replace(/Upraveno.*$/i, "");
+    // NEW: Remove standalone time indicators like "před 2 dny", "2 h", "3 min" often found at end or start
+    commentText = commentText.replace(
+      /(před\s+)?\d+\s+(dny|d\.|h|min|s|týd\.?|měs\.?|r\.?|let).*$/i,
+      "",
+    );
     commentText = commentText.trim();
 
     var lowerUser = username.toLowerCase();
