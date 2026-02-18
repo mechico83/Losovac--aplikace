@@ -13,6 +13,7 @@ const ctx = canvas.getContext("2d");
 const modal = document.getElementById("winnerModal");
 const winnerNameSpan = document.getElementById("winnerName");
 const btnCloseModal = document.getElementById("btnCloseModal");
+const countdownOverlay = document.getElementById("countdownOverlay");
 
 // Wheel Section Container for Fullscreen
 const wheelSection = document.querySelector(".wheel-section");
@@ -613,9 +614,39 @@ function startSpin() {
   // ACTIVATE FULLSCREEN
   wheelSection.classList.add("fullscreen-spin");
 
-  spinSpeed = Math.random() * 0.2 + 0.3;
+  // COUNTDOWN LOGIC (3, 2, 1, TEĎ!)
+  let count = 3;
+  countdownOverlay.classList.remove("hidden");
+  countdownOverlay.innerText = count;
 
-  animate();
+  // Trigger animation for the first number
+  countdownOverlay.classList.remove("animate-pop");
+  void countdownOverlay.offsetWidth;
+  countdownOverlay.classList.add("animate-pop");
+
+  const interval = setInterval(() => {
+    count--;
+
+    if (count > 0) {
+      countdownOverlay.innerText = count;
+    } else if (count === 0) {
+      countdownOverlay.innerText = "TEĎ!";
+    } else {
+      // End of countdown
+      clearInterval(interval);
+      countdownOverlay.classList.add("hidden");
+
+      // Start actual spin
+      spinSpeed = Math.random() * 0.2 + 0.3;
+      animate();
+      return;
+    }
+
+    // Re-trigger animation for each update
+    countdownOverlay.classList.remove("animate-pop");
+    void countdownOverlay.offsetWidth;
+    countdownOverlay.classList.add("animate-pop");
+  }, 1000);
 }
 
 function animate() {
