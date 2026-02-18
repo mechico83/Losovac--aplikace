@@ -152,6 +152,49 @@ button {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Checkbox Wrapper */
+.checkbox-wrapper {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--neon-cyan);
+  background: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  position: relative;
+  border-radius: 3px;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked {
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked::after {
+  content: '✔';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #000;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.checkbox-wrapper label {
+  color: var(--neon-cyan) !important;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: 0 !important; /* Override .input-group label */
+  text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+}
+
 /* Help Button */
 .btn.small-btn {
   font-size: 0.8rem;

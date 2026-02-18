@@ -2,6 +2,7 @@
 // Senior JS Implementation
 
 const commentsInput = document.getElementById("commentsInput");
+const rawListModeCb = document.getElementById("rawListMode");
 const btnLoad = document.getElementById("btnLoad");
 const btnSpin = document.getElementById("btnSpin");
 const btnReset = document.getElementById("btnReset");
@@ -330,6 +331,38 @@ function parseData() {
 
     var username = "";
     var commentText = "";
+
+    // --- RAW LIST MODE ---
+    if (rawListModeCb.checked) {
+      username = trimmed;
+      var lowerUser = username.toLowerCase();
+
+      // Filter: Blacklist
+      if (
+        BLOCKED_USERS.some(function (b) {
+          return b.toLowerCase() === lowerUser;
+        })
+      ) {
+        invalid++;
+        rejectedEntries.push({ name: username, reason: "BLACKLIST" });
+        return;
+      }
+
+      // Filter: Deduplication
+      if (seenUsers.has(lowerUser)) {
+        invalid++;
+        rejectedEntries.push({ name: username, reason: "DUPLICITA" });
+        return;
+      }
+
+      // PASS
+      seenUsers.add(lowerUser);
+      newParticipants.push(username);
+      valid++;
+      return; // Skip standard logic
+    }
+
+    // --- STANDARD MODE ---
 
     // 1. Strict Format Detection
     if (trimmed.includes("###")) {
