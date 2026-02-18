@@ -1,4 +1,5 @@
-// Antigravity Raffle Agent Logic
+// Antigravity Raffle Agent Logic - V4 with Audit Log
+// Senior JS Implementation
 
 const commentsInput = document.getElementById('commentsInput');
 const btnLoad = document.getElementById('btnLoad');
@@ -25,17 +26,29 @@ const codeFacebook = document.getElementById('codeFacebook');
 const btnCopyInstagram = document.getElementById('btnCopyInstagram');
 const btnCopyFacebook = document.getElementById('btnCopyFacebook');
 
+// Rejected Audit Elements
+const rejectedModal = document.getElementById('rejectedModal');
+const rejectedTableBody = document.getElementById('rejectedTableBody');
+const rejectedCountSpan = document.getElementById('rejectedCount');
+const btnCloseRejected = document.getElementById('btnCloseRejected');
+const invalidStatBox = document.querySelector('.stat-box.invalid');
 
+// State
 let participants = []; 
+let rejectedEntries = [];
 let isSpinning = false;
 let currentRotation = 0; 
 let spinSpeed = 0;
 let animationFrameId = null;
 
-// Neon Palette
+// Configuration
 const colors = ['#00f3ff', '#2c67ff', '#ff0055', '#ffffff'];
+const BLOCKED_USERS = [
+    'Recenze', 'Sbírka', 'O MNĚ', 'MATERIÁL', 'BALENÍ', 
+    'Košík', 'Hledat', 'bellakvet', 'Upraveno', 'Sbírka kytiček'
+];
 
-// --- Extractor Scripts (Updated V2) ---
+// --- Extractor Scripts ---
 
 const INSTAGRAM_SCRIPT = `
 // Antigravity Raffle Agent - Instagram Extractor (v2)
@@ -44,90 +57,72 @@ const INSTAGRAM_SCRIPT = `
     const items = document.querySelectorAll('ul li');
     
     items.forEach(li => {
-        // 1. Získání jména (H3, H2 nebo odkaz uvnitř divu)
         let userEl = li.querySelector('h3, h2');
-        if (!userEl) userEl = li.querySelector('div > a'); // Fallback
-
+        if (!userEl) userEl = li.querySelector('div > a');
         if (!userEl) return;
         const username = userEl.innerText.trim();
         
-        // 2. Získání textu (element s dir="auto" nebo span)
-        // Ignorujeme jméno, pokud je v textu zopakováné
         let text = "";
         const textSpan = li.querySelector('span[dir="auto"]');
         
         if (textSpan) {
              text = textSpan.innerText.trim();
         } else {
-             // Fallback: text celého obsahu minus jméno
-             // Toto se ale často chytne i metadat
              text = li.innerText.replace(username, '').trim(); 
         }
 
         if(username && text.length > 0) {
-            // Oddělovač ### pro bezpečnější split v aplikaci
             comments.push(username + ' ### ' + text);
         }
     });
 
     if(comments.length === 0) {
-        alert('Nenalezeny žádné komentáře. Ujistěte se, že jste je načetli (tlačítko +).');
+        alert('Nenalezeny žádné komentáře.');
         return;
     }
 
     const output = comments.join('\\n');
-    copyToClipboard(output, comments.length);
-
-    function copyToClipboard(text, count) {
-        const el = document.createElement('textarea');
-        el.value = text;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        alert('Zkopírováno ' + count + ' komentářů! (Formát: User ### Text)');
-    }
+    const el = document.createElement('textarea');
+    el.value = output;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    alert('Zkopírováno ' + comments.length + ' komentářů! (Formát: User ### Text)');
 })();
 `.trim();
 
 const FACEBOOK_SCRIPT = `
 // Antigravity Raffle Agent - Facebook Extractor
-// Spusťte v konzoli (F12) na stránce příspěvku s otevřenými komentáři.
 (function() {
     let comments = [];
     const commentDivs = document.querySelectorAll('div[aria-label^="Comment by"], div[aria-label^="Komentář od"]');
     
     if(commentDivs.length === 0) {
-        alert("Nenalezeny komentáře pomocí standardních selektorů. Zkuste rozbalit 'Všechny komentáře'.");
+        alert("Nenalezeny komentáře.");
     }
 
     commentDivs.forEach(div => {
         const label = div.getAttribute('aria-label');
         let username = label.replace('Comment by ', '').replace('Komentář od ', '').trim();
-        
         const textDiv = div.querySelector('div[dir="auto"]');
         
         if(username && textDiv) {
-            // Použijeme stejný bezpečný oddělovač
             comments.push(username + ' ### ' + textDiv.innerText);
         }
     });
 
     if(comments.length > 0) {
         const output = comments.join('\\n');
-        copyToClipboard(output, comments.length);
-    } else {
-        alert('Žádné komentáře nenalezeny. (Zkuste sjet dolů a načíst více)');
-    }
-
-    function copyToClipboard(text, count) {
         const el = document.createElement('textarea');
-        el.value = text;
+        el.value = output;
         document.body.appendChild(el);
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
-        alert('Zkopírováno ' + count + ' komentářů! (Formát: User ### Text)');
+        alert('Zkopírováno ' + comments.length + ' komentářů!');
+    } else {
+        alert('Žádné komentáře nenalezeny.');
     }
 })();
 `.trim();
@@ -141,35 +136,24 @@ codeFacebook.value = FACEBOOK_SCRIPT;
 btnLoad.addEventListener('click', parseData);
 btnSpin.addEventListener('click', startSpin);
 btnReset.addEventListener('click', resetApp);
+btnCloseModal.addEventListener('click', () => modal.classList.add('hidden'));
 
-// Winner Modal
-btnCloseModal.addEventListener('click', () => {
-    modal.classList.add('hidden');
-});
+btnHelp.addEventListener('click', () => extractorModal.classList.remove('hidden'));
+btnCloseExtractor.addEventListener('click', () => extractorModal.classList.add('hidden'));
 
-// Help/Extractor Modal
-btnHelp.addEventListener('click', () => {
-    extractorModal.classList.remove('hidden');
-});
+// Rejected Audit Log
+invalidStatBox.addEventListener('click', showRejectedModal);
+btnCloseRejected.addEventListener('click', () => rejectedModal.classList.add('hidden'));
 
-btnCloseExtractor.addEventListener('click', () => {
-    extractorModal.classList.add('hidden');
-});
-
-// Tabs Logic
 tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-        // Deactivate all
         tabButtons.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active')); // Actually typically add hidden, but using CSS .active block display
-        // Activate one
+        tabContents.forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
-        const targetId = btn.getAttribute('data-target');
-        document.getElementById(targetId).classList.add('active');
+        document.getElementById(btn.getAttribute('data-target')).classList.add('active');
     });
 });
 
-// Copy Buttons
 btnCopyInstagram.addEventListener('click', () => {
     navigator.clipboard.writeText(INSTAGRAM_SCRIPT).then(() => {
         btnCopyInstagram.innerText = "ZKOPÍROVÁNO!";
@@ -184,98 +168,121 @@ btnCopyFacebook.addEventListener('click', () => {
     });
 });
 
-// Paste Button
 btnPaste.addEventListener('click', async () => {
     try {
         const text = await navigator.clipboard.readText();
         commentsInput.value = text;
-        // Trigger visual feedback like flash?
         commentsInput.focus();
     } catch (err) {
-        alert('Nepodařilo se načíst ze schránky. Zkontrolujte oprávnění prohlížeče.');
+        alert('Nepodařilo se načíst ze schránky.');
     }
 });
 
 
-// --- Core Logic ---
+// =============================================
+// CORE LOGIC (V4 - with Audit Log)
+// =============================================
 
 function parseData() {
     const rawText = commentsInput.value;
-    const lines = rawText.split('\\n');
+    const lines = rawText.split('\n');
     let loaded = 0;
     let valid = 0;
     let invalid = 0;
     
     const seenUsers = new Set();
     const newParticipants = [];
+    rejectedEntries = []; // Reset audit log
 
     lines.forEach(line => {
         const trimmed = line.trim();
-        if (!trimmed) return; // Skip empty lines
+        if (!trimmed) return; 
         loaded++;
 
         let username = '';
         let commentText = '';
-        
-        // Parsing Logic with Priority for Separators
-        if (trimmed.includes(' ### ')) {
-            // Priority 1: New Cleaner Separator
-             const splitInd = trimmed.indexOf(' ### ');
-             username = trimmed.substring(0, splitInd).trim();
-             commentText = trimmed.substring(splitInd + 5).trim();
-        } else if (trimmed.includes(' - ')) {
-            // Priority 2: Dash Separator (Older Extractor or manual)
-             const splitInd = trimmed.indexOf(' - ');
-             username = trimmed.substring(0, splitInd).trim();
-             commentText = trimmed.substring(splitInd + 3).trim();
-        } else {
-            // Priority 3: First space (Manual input fallback)
+
+        // 1. Robust Splitting (### priority, then dash, then space)
+        if (trimmed.includes('###')) {
+            const parts = trimmed.split('###');
+            username = parts[0].trim();
+            commentText = parts.slice(1).join('###').trim();
+        } 
+        else if (trimmed.includes(' - ')) {
+            const parts = trimmed.split(' - ');
+            username = parts[0].trim();
+            commentText = parts.slice(1).join(' - ').trim();
+        } 
+        else {
             const firstSpace = trimmed.indexOf(' ');
             if (firstSpace > -1) {
-                username = trimmed.substring(0, firstSpace);
-                commentText = trimmed.substring(firstSpace + 1);
+                username = trimmed.substring(0, firstSpace).trim();
+                commentText = trimmed.substring(firstSpace + 1).trim();
             } else {
                 username = trimmed;
+                commentText = '';
             }
         }
-        
-        // --- CLEANING RULES ---
-        // Odstranění "smetí" z konce řádku (metadata Instagram/FB)
-        // Regex vysvětlení:
-        // (\d+\s*[dhmsw]\s*)? -> Volitelně číslo + d/h/m/s/w (čas), např "2 d", "8 h", "12w"
-        // Odpovědět -> Klíčové slovo
-        // .*$ -> Vše do konce řádku
-        
-        // Remove "2 dOdpovědět", "8 hOdpovědět", "Odpovědět", "Reply"
+
+        // Cleanup metadata noise
         commentText = commentText.replace(/(\d+\s*[dhmsw]\s*)?Odpovědět.*$/i, '');
         commentText = commentText.replace(/(\d+\s*[dhmsw]\s*)?Reply.*$/i, '');
         commentText = commentText.replace(/To se mi líbí.*$/i, '');
+        commentText = commentText.replace(/Upraveno.*$/i, '');
         commentText = commentText.trim();
-        
-        // --- VALIDATION & DEDUPLICATION ---
 
-        // Rule A: Check for '@' in the *whole line* (usually in comment)
-        // Contest Rule: Must tag a friend.
-        if (!trimmed.includes('@')) {
+        const lowerUser = username.toLowerCase();
+
+        // --- FILTER 1: Blacklist ---
+        if (BLOCKED_USERS.some(b => b.toLowerCase() === lowerUser)) {
             invalid++;
+            rejectedEntries.push({ name: username, reason: 'BLACKLIST' });
             return;
         }
 
-        // Rule B: Deduplication
-        const userKey = username.toLowerCase();
-
-        if (seenUsers.has(userKey)) {
+        // --- FILTER 2: Navigation noise (Name == Text) ---
+        if (commentText && lowerUser === commentText.toLowerCase()) {
             invalid++;
-        } else {
-            seenUsers.add(userKey);
-            newParticipants.push(username); 
-            valid++;
+            rejectedEntries.push({ name: username, reason: 'NAVIGACE' });
+            return;
         }
+
+        // --- FILTER 3: Bad format (empty name or text) ---
+        if (!username || !commentText) {
+            invalid++;
+            rejectedEntries.push({ name: username || '(prázdné)', reason: 'VADNÝ FORMÁT' });
+            return;
+        }
+
+        // --- FILTER 4: Long text (post body > 300 chars) ---
+        if (commentText.length > 300) {
+            invalid++;
+            rejectedEntries.push({ name: username, reason: 'DLOUHÝ TEXT' });
+            return;
+        }
+
+        // --- FILTER 5: Mandatory '@' ---
+        if (!commentText.includes('@')) {
+            invalid++;
+            rejectedEntries.push({ name: username, reason: 'CHYBÍ @' });
+            return;
+        }
+
+        // --- FILTER 6: Deduplication ---
+        if (seenUsers.has(lowerUser)) {
+            invalid++;
+            rejectedEntries.push({ name: username, reason: 'DUPLICITA' });
+            return;
+        }
+
+        // ✅ PASS
+        seenUsers.add(lowerUser);
+        newParticipants.push(username); 
+        valid++;
     });
 
     if (newParticipants.length === 0) {
-        alert("Žádní platní účastníci! Zkontrolujte, zda komentáře obsahují '@'.");
-        return;
+        alert("Žádní platní účastníci! Zkontrolujte, zda komentáře obsahují '@' a nejsou na blacklistu.");
     }
 
     participants = newParticipants;
@@ -284,16 +291,65 @@ function parseData() {
     countValidSpan.innerText = valid;
     countInvalidSpan.innerText = invalid;
     
-    btnSpin.disabled = false;
+    btnSpin.disabled = participants.length === 0;
     btnReset.disabled = false;
     
     drawWheel();
 }
 
+
+// =============================================
+// AUDIT LOG MODAL
+// =============================================
+
+function showRejectedModal() {
+    if (rejectedEntries.length === 0) return;
+    
+    rejectedCountSpan.innerText = rejectedEntries.length;
+
+    // Build table rows
+    let html = '';
+    rejectedEntries.forEach((entry, i) => {
+        const badgeClass = getBadgeClass(entry.reason);
+        html += `<tr>
+            <td>${i + 1}</td>
+            <td>${escapeHtml(entry.name)}</td>
+            <td><span class="reason-badge ${badgeClass}">${entry.reason}</span></td>
+        </tr>`;
+    });
+    
+    rejectedTableBody.innerHTML = html;
+    rejectedModal.classList.remove('hidden');
+}
+
+function getBadgeClass(reason) {
+    switch (reason) {
+        case 'BLACKLIST':    return 'blacklist';
+        case 'CHYBÍ @':      return 'missing-at';
+        case 'DUPLICITA':    return 'duplicate';
+        case 'DLOUHÝ TEXT':  return 'long-text';
+        case 'VADNÝ FORMÁT': return 'bad-format';
+        case 'NAVIGACE':     return 'nav-noise';
+        default:             return '';
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+
+// =============================================
+// RESET
+// =============================================
+
 function resetApp() {
     isSpinning = false;
-    if(animationFrameId) cancelAnimationFrame(animationFrameId);
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
     participants = [];
+    rejectedEntries = [];
     currentRotation = 0;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     commentsInput.value = '';
@@ -304,7 +360,10 @@ function resetApp() {
     btnReset.disabled = true;
 }
 
-// --- Wheel Graphics ---
+
+// =============================================
+// WHEEL GRAPHICS
+// =============================================
 
 function drawWheel() {
     if (participants.length === 0) return;
@@ -331,7 +390,7 @@ function drawWheel() {
 
         ctx.fillStyle = (i % 2 === 0) ? colors[0] : colors[1];
         if (participants.length % 2 !== 0 && i === participants.length - 1) {
-             ctx.fillStyle = colors[2]; 
+             ctx.fillStyle = colors[2];
         }
         
         ctx.fill();
@@ -350,7 +409,10 @@ function drawWheel() {
     ctx.restore();
 }
 
-// --- Animation & Physics ---
+
+// =============================================
+// ANIMATION & PHYSICS
+// =============================================
 
 function startSpin() {
     if (isSpinning || participants.length === 0) return;
@@ -366,7 +428,7 @@ function startSpin() {
 }
 
 function animate() {
-    spinSpeed *= 0.985; // Friction
+    spinSpeed *= 0.985;
 
     if (spinSpeed < 0.002) {
         isSpinning = false;
@@ -391,9 +453,7 @@ function resolveWinner() {
     const arcSize = (2 * Math.PI) / participants.length;
     const winnerIndex = Math.floor(pointerAngle / arcSize);
     
-    const winner = participants[winnerIndex];
-    
-    showWinner(winner);
+    showWinner(participants[winnerIndex]);
 }
 
 function showWinner(name) {

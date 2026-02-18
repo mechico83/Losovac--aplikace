@@ -103,6 +103,29 @@ marie_svoboda Chci vyhrát! @jana
         </div>
     </div>
 
+    <!-- Modal: Rejected Audit Log -->
+    <div id="rejectedModal" class="modal hidden">
+        <div class="modal-content large-modal rejected-modal">
+            <h3>🔍 DŮVODY VYŘAZENÍ</h3>
+            <p class="modal-subtitle">Klikněte na řádek pro zobrazení detailu. Celkem vyřazeno: <strong id="rejectedCount">0</strong></p>
+            <div id="rejectedList" class="rejected-table-wrapper">
+                <table class="rejected-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>JMÉNO</th>
+                            <th>DŮVOD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rejectedTableBody">
+                        <!-- JS fills this -->
+                    </tbody>
+                </table>
+            </div>
+            <button id="btnCloseRejected" class="btn tertiary top-space full-width">ZAVŘÍT</button>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
