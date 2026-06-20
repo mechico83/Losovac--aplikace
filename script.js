@@ -106,39 +106,52 @@ const BLOCKED_USERS = [
 // =============================================
 
 const INSTAGRAM_SCRIPT = `
-// Antigravity Raffle Agent - Instagram Extractor (v2)
+// Antigravity Raffle Agent - Instagram Extractor (v3 - DOM Order Pairing)
 (function() {
-    let comments = [];
-    const items = document.querySelectorAll('ul li');
-    
-    items.forEach(li => {
-        let userEl = li.querySelector('h3, h2');
-        if (!userEl) userEl = li.querySelector('div > a');
-        if (!userEl) return;
-        const username = userEl.innerText.trim();
-        
-        let text = "";
-        const textSpan = li.querySelector('span[dir="auto"]');
-        
-        if (textSpan) {
-             text = textSpan.innerText.trim();
-        } else {
-             text = li.innerText.replace(username, '').trim(); 
-        }
+    const comments = [];
+    const seen = new Set();
+    // Navigační odkazy (nejsou to komentáře)
+    const SYS = new Set(['explore','reels','reel','p','stories','direct','accounts',
+        'about','home','hledat','upozorneni','profil','zpravy','vytvorit','panel','tv','notifications']);
 
-        if(username && text.length > 0) {
-            comments.push(username + ' ### ' + text);
+    // Šum: časové razítko ("3 d", "1 d · Upraveno"), počty lajků, tlačítka
+    const isNoise = (t) =>
+        /^\\d+\\s*[a-zá-ž]{1,4}(\\s*·.*)?$/i.test(t) ||
+        /se mi líbí/i.test(t) ||
+        /^(odpovědět|reply|upraveno|zobrazit překlad|see translation)$/i.test(t);
+
+    // Projdi v pořadí DOM odkazy na profily i textové bloky
+    const nodes = document.querySelectorAll('a[href^="/"], span[dir="auto"]');
+    let pending = null; // čekající autor
+
+    nodes.forEach(node => {
+        if (node.tagName === 'A') {
+            const m = (node.getAttribute('href') || '').match(/^\\/([A-Za-z0-9._]{1,40})\\/$/);
+            if (!m) return;
+            const text = (node.textContent || '').trim();
+            if (text.startsWith('@')) return;            // zmínka v textu, ne autor
+            const username = m[1];                         // handle z URL
+            if (SYS.has(username.toLowerCase())) return;   // navigace
+            pending = username;
+        } else { // span[dir="auto"]
+            if (!pending) return;
+            const t = (node.innerText || '').trim();
+            if (!t || t.toLowerCase() === pending.toLowerCase() || isNoise(t)) return;
+            if (!seen.has(pending.toLowerCase())) {
+                seen.add(pending.toLowerCase());
+                comments.push(pending + ' ### ' + t);
+            }
+            pending = null;
         }
     });
 
-    if(comments.length === 0) {
-        alert('Nenalezeny žádné komentáře.');
+    if (comments.length === 0) {
+        alert('Nenalezeny žádné komentáře. Otevřete okno s komentáři a načtěte je (odscrolujte dolů).');
         return;
     }
 
-    const output = comments.join('\\n');
     const el = document.createElement('textarea');
-    el.value = output;
+    el.value = comments.join('\\n');
     document.body.appendChild(el);
     el.select();
     document.execCommand('copy');
